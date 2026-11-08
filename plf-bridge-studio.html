@@ -1,0 +1,1323 @@
+<title>PLF Bridge Studio</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&family=Libre+Franklin:wght@400;500;600;700&family=Roboto:wght@400;500;700&family=Source+Sans+3:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: tool shell. Editor panel on the left, sticky live preview on the right; on phones the preview comes first. */
+:root{
+  --bg:#F2F4F7; --panel:#FFFFFF; --ink:#132036; --muted:#5A6880; --line:#DAE0E8; --soft:#EDF1F6; --soft2:#F7F9FB;
+  --accent:#13315C; --accent-ink:#FFFFFF; --focus:#2F6FB3;
+  --good:#22814B; --good-bg:#E7F4EC; --bad:#C23B3B; --bad-bg:#FBEAEA; --warn:#9A5F0E; --warn-bg:#FBF2E2;
+  --checker:#E3E8EF;
+  --f-display:"Barlow Semi Condensed","IBM Plex Sans",Arial,sans-serif;
+  --f-body:"IBM Plex Sans",Arial,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0D131C; --panel:#141C27; --ink:#E4EAF3; --muted:#93A1B5; --line:#253142; --soft:#1B2533; --soft2:#17202C;
+    --accent:#8DB2E8; --accent-ink:#0D1A2C; --focus:#8DB2E8;
+    --good:#5CCB8A; --good-bg:#16301F; --bad:#F07B7B; --bad-bg:#371B1D; --warn:#E3B262; --warn-bg:#33281A;
+    --checker:#222C3A; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0D131C; --panel:#141C27; --ink:#E4EAF3; --muted:#93A1B5; --line:#253142; --soft:#1B2533; --soft2:#17202C;
+  --accent:#8DB2E8; --accent-ink:#0D1A2C; --focus:#8DB2E8;
+  --good:#5CCB8A; --good-bg:#16301F; --bad:#F07B7B; --bad-bg:#371B1D; --warn:#E3B262; --warn-bg:#33281A;
+  --checker:#222C3A; color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.45;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 32px}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+
+/* header */
+.top{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding-block:18px 14px;max-width:1680px;margin:0 auto}
+.brand{display:flex;align-items:center;gap:12px;min-width:0}
+.mark{flex:none;width:40px;height:40px;border-radius:9px;background:var(--accent);display:grid;place-items:center}
+.mark svg{display:block}
+.brand h1{margin:0;font-family:var(--f-display);font-weight:700;font-size:24px;letter-spacing:.2px;line-height:1.05}
+.brand p{margin:2px 0 0;color:var(--muted);font-size:13px}
+.top-actions{display:flex;gap:8px;flex-wrap:wrap}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;border:1px solid var(--line);background:var(--panel);
+  padding:8px 13px;border-radius:7px;cursor:pointer;font-weight:500;font-size:13.5px;line-height:1.2;white-space:nowrap}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{filter:brightness(1.12)}
+.btn.small{padding:5px 9px;font-size:12.5px;border-radius:6px}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--muted)}
+.btn.ghost:hover{color:var(--ink);background:var(--soft)}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.btn svg{flex:none}
+
+/* app grid */
+.app{display:grid;grid-template-columns:minmax(360px,470px) minmax(0,1fr);gap:18px;max-width:1680px;margin:0 auto;align-items:start}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;min-width:0;overflow:hidden}
+.stage{position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px);min-width:0;display:flex;flex-direction:column;gap:12px}
+@media (max-width:980px){
+  .app{grid-template-columns:minmax(0,1fr)}
+  .stage{position:static;order:-1}
+}
+
+/* tabs */
+.tabs{display:flex;border-bottom:1px solid var(--line);background:var(--soft2);overflow-x:auto}
+.tab{flex:1 0 auto;border:0;background:transparent;padding:13px 14px 11px;cursor:pointer;font-family:var(--f-display);font-weight:600;
+  font-size:15px;letter-spacing:.3px;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent);background:var(--panel)}
+.pane{padding:6px 18px 20px}
+.sec{padding-block:16px 4px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:11px}
+.sec:last-child{border-bottom:0}
+.sec-h{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.sec h2{margin:0;font-family:var(--f-display);font-weight:600;font-size:13px;letter-spacing:1.1px;text-transform:uppercase;color:var(--muted)}
+.hint{margin:0;color:var(--muted);font-size:12.5px}
+.field{display:flex;flex-direction:column;gap:5px;min-width:0}
+.field > span{font-size:12.5px;color:var(--muted);font-weight:500}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px 12px}
+@media (max-width:420px){.grid3{grid-template-columns:1fr 1fr}}
+input[type=text],input[type=number],select,textarea,input.txt{width:100%;min-width:0;border:1px solid var(--line);background:var(--panel);
+  border-radius:7px;padding:7px 9px;font-size:13.5px}
+textarea{resize:vertical;min-height:64px;font-family:var(--f-mono);font-size:12.5px;line-height:1.5}
+input:focus,select:focus,textarea:focus{border-color:var(--focus);outline:none;box-shadow:0 0 0 3px color-mix(in srgb,var(--focus) 22%,transparent)}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.range{display:grid;grid-template-columns:1fr 52px;align-items:center;gap:10px}
+.range output{font-family:var(--f-mono);font-size:12.5px;text-align:right;color:var(--muted)}
+
+/* segmented */
+.seg{display:flex;flex-wrap:wrap;gap:4px;background:var(--soft);padding:3px;border-radius:8px}
+.seg button{flex:1 1 auto;border:0;background:transparent;padding:6px 10px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:500;color:var(--muted);white-space:nowrap}
+.seg button[aria-pressed="true"]{background:var(--panel);color:var(--ink);box-shadow:0 1px 2px rgba(15,25,40,.14)}
+
+/* toggles */
+.toggles{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px}
+.tg{display:flex;align-items:center;gap:8px;font-size:13.5px;cursor:pointer}
+.tg input{width:16px;height:16px;accent-color:var(--accent);margin:0}
+
+/* palettes */
+.palettes{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:6px}
+.pal{display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--panel);border-radius:7px;padding:7px 8px;cursor:pointer;font-size:12.5px;text-align:left}
+.pal[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.pal .dots{display:flex;flex:none}
+.pal .dots i{width:11px;height:11px;border-radius:50%;margin-right:-3px;border:1.5px solid var(--panel)}
+.colors{display:grid;grid-template-columns:1fr 1fr;gap:8px 12px}
+.cpick{display:flex;align-items:center;gap:9px;font-size:13px;cursor:pointer;min-width:0}
+.cpick input{flex:none;width:34px;height:26px;border:1px solid var(--line);border-radius:6px;padding:2px;background:var(--panel);cursor:pointer}
+.cpick code{font-family:var(--f-mono);font-size:11.5px;color:var(--muted);margin-left:auto}
+
+/* rows editor */
+.rows-head,.row{display:grid;grid-template-columns:22px minmax(0,1fr) 84px 92px 28px 28px;gap:6px;align-items:center}
+.rows-head{font-size:11.5px;color:var(--muted);font-weight:500;letter-spacing:.4px;text-transform:uppercase;padding-inline:2px}
+.rows{display:flex;flex-direction:column;gap:5px}
+.row-wrap{border-radius:8px}
+.row-wrap.open{background:var(--soft2);box-shadow:inset 0 0 0 1px var(--line)}
+.row{padding:2px}
+.row .idx{font-family:var(--f-mono);font-size:11.5px;color:var(--muted);text-align:center}
+.row input,.row select{padding:6px 7px;font-size:13px}
+.row .r-val{font-family:var(--f-mono);text-align:right;font-size:12.5px}
+.row .r-val.pos{color:var(--good)}
+.row .r-val.neg{color:var(--bad)}
+.row .r-val[readonly]{background:var(--soft);color:var(--muted);border-style:dashed}
+.row.t-anchor .r-label,.row.t-total .r-label{font-weight:600}
+.sw{position:relative;width:28px;height:28px;border-radius:6px;border:1px solid var(--line);cursor:pointer;overflow:hidden}
+.sw input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.sw.custom::after{content:"";position:absolute;right:2px;top:2px;width:6px;height:6px;border-radius:50%;background:var(--panel);box-shadow:0 0 0 1px rgba(0,0,0,.35)}
+.more{width:28px;height:28px;border:1px solid transparent;background:transparent;border-radius:6px;cursor:pointer;color:var(--muted);display:grid;place-items:center}
+.more:hover{background:var(--soft);color:var(--ink)}
+.row-tools{display:flex;flex-wrap:wrap;gap:6px;padding:4px 6px 8px 30px}
+.row-tools .danger{color:var(--bad)}
+@media (max-width:480px){
+  .rows-head{display:none}
+  .row{grid-template-columns:22px minmax(0,1fr) 28px 28px;grid-template-areas:"i l c m" ". v t t"}
+  .row .idx{grid-area:i}.row .r-label{grid-area:l}.row .r-val{grid-area:v}.row .r-type{grid-area:t}.row .sw{grid-area:c}.row .more{grid-area:m}
+}
+.add-bar{display:flex;flex-wrap:wrap;gap:6px}
+.paste{display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:8px;background:var(--soft2);border:1px solid var(--line)}
+.recon{display:flex;flex-direction:column;gap:6px}
+.recon .item{display:flex;gap:10px;align-items:flex-start;justify-content:space-between;background:var(--warn-bg);color:var(--warn);padding:9px 11px;border-radius:8px;font-size:12.5px}
+.recon .item b{font-weight:600}
+.recon .item .btn{flex:none}
+
+/* stage */
+.summary{display:flex;flex-wrap:wrap;gap:8px;align-items:stretch}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:9px 14px;min-width:0;flex:1 1 120px}
+.stat span{display:block;font-size:11.5px;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);font-weight:500}
+.stat b{display:block;font-family:var(--f-mono);font-weight:500;font-size:16px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.stat b.pos{color:var(--good)}.stat b.neg{color:var(--bad)}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border-radius:99px;font-size:12px;font-weight:600;white-space:nowrap}
+.chip.ok{background:var(--good-bg);color:var(--good)}
+.chip.gap{background:var(--warn-bg);color:var(--warn)}
+.chip.ex{background:var(--soft);color:var(--muted)}
+.stat .chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.frame{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;justify-content:center}
+.canvas-box{position:relative;max-width:100%;line-height:0;box-shadow:0 1px 3px rgba(15,25,40,.10),0 8px 24px rgba(15,25,40,.07)}
+.canvas-box.checker{background-color:#fff;background-image:linear-gradient(45deg,var(--checker) 25%,transparent 25%),linear-gradient(-45deg,var(--checker) 25%,transparent 25%),linear-gradient(45deg,transparent 75%,var(--checker) 75%),linear-gradient(-45deg,transparent 75%,var(--checker) 75%);background-size:16px 16px;background-position:0 0,0 8px,8px -8px,-8px 0}
+canvas#preview{display:block;width:100%}
+.stage-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;color:var(--muted);font-size:12.5px}
+.stage-foot b{font-family:var(--f-mono);font-weight:500;color:var(--ink)}
+.export-box{display:flex;flex-direction:column;gap:8px}
+.px{font-family:var(--f-mono);font-size:13px;color:var(--ink)}
+.file-btn{position:relative;overflow:hidden}
+.file-btn input{position:absolute;inset:0;opacity:0;cursor:pointer}
+
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--panel);
+  padding:10px 16px;border-radius:8px;font-size:13.5px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;max-width:calc(100% - 32px);z-index:20}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media (prefers-reduced-motion:reduce){.toast{transition:none}}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+</style>
+
+<header class="top">
+  <div class="brand">
+    <div class="mark" aria-hidden="true">
+      <svg width="24" height="22" viewBox="0 0 24 22"><rect x="1" y="2" width="4" height="19" fill="#fff"/><rect x="7" y="2" width="4" height="6" fill="#F07B7B"/><rect x="13" y="8" width="4" height="4" fill="#F07B7B"/><rect x="19" y="12" width="4" height="9" fill="#fff" opacity=".75"/></svg>
+    </div>
+    <div>
+      <h1>PLF Bridge Studio</h1>
+      <p>Waterfall builder for solar, wind and BESS technical due diligence</p>
+    </div>
+  </div>
+  <div class="top-actions">
+    <button class="btn" id="btnCopyTop" type="button">Copy image</button>
+    <button class="btn primary" id="btnDownloadTop" type="button">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v8M4.5 7 8 10.5 11.5 7M2.5 13.5h11"/></svg>
+      <span id="dlLabel">Download PNG</span>
+    </button>
+  </div>
+</header>
+
+<main class="app">
+  <aside class="panel" aria-label="Chart settings">
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" aria-selected="true" data-tab="data" id="tab-data">Data</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="style" id="tab-style">Style</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="labels" id="tab-labels">Labels &amp; axis</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="export" id="tab-export">Export</button>
+    </div>
+
+    <!-- DATA -->
+    <div class="pane" data-pane="data" role="tabpanel" aria-labelledby="tab-data">
+      <div class="sec">
+        <div class="sec-h"><h2>Start from</h2></div>
+        <div class="grid2">
+          <label class="field" style="grid-column:1/-1"><span>Template (replaces rows, heading and units; Undo brings them back)</span>
+            <select id="tplSelect">
+              <option value="">Choose a template…</option>
+              <option value="solar">Solar PLF bridge, P50 to actual</option>
+              <option value="wind">Wind CUF bridge, P50 to actual</option>
+              <option value="bess">BESS round-trip efficiency bridge</option>
+              <option value="gen">Generation bridge in MWh, with subtotal</option>
+              <option value="multi">Multi-year PLF bridge, FY24 to FY26</option>
+              <option value="rev">Revenue bridge in ₹ Cr</option>
+              <option value="blank">Blank, 5 rows</option>
+            </select>
+          </label>
+        </div>
+      </div>
+      <div class="sec">
+        <div class="sec-h"><h2>Heading</h2></div>
+        <label class="field"><span>Title</span><input type="text" id="f-title" data-k="title" placeholder="Leave blank for no title"></label>
+        <label class="field"><span>Subtitle</span><input type="text" id="f-subtitle" data-k="subtitle" placeholder="Optional"></label>
+      </div>
+      <div class="sec">
+        <div class="sec-h">
+          <h2>Bars <span id="rowCount" style="letter-spacing:0;text-transform:none;font-family:var(--f-mono);font-weight:400"></span></h2>
+          <div style="display:flex;gap:4px">
+            <button class="btn small ghost" id="btnUndo" type="button" disabled>Undo</button>
+            <button class="btn small" id="btnPasteToggle" type="button">Paste from Excel</button>
+          </div>
+        </div>
+        <div class="paste" id="pasteBox" hidden>
+          <label class="field"><span>One bar per line: Label, Value, Type. Copy cells straight from Excel; tabs work.</span>
+            <textarea id="pasteText" rows="7" placeholder="P50 PLF&#9;24.50&#9;start&#10;Irradiance variation&#9;-0.85&#10;Grid curtailment&#9;-0.62&#10;Actual PLF&#9;&#9;total"></textarea>
+          </label>
+          <p class="hint">Type is optional: start, change, subtotal or total. Without a type, the first row becomes the start, a last row named Actual or Total becomes the end, and the rest are changes. Values like (0.85) count as negative.</p>
+          <div class="add-bar">
+            <button class="btn small primary" id="pasteReplace" type="button">Replace rows</button>
+            <button class="btn small" id="pasteAppend" type="button">Append</button>
+            <button class="btn small ghost" id="pasteCancel" type="button">Cancel</button>
+          </div>
+        </div>
+        <div class="rows-head" aria-hidden="true"><span>#</span><span>Label</span><span style="text-align:right">Value</span><span>Type</span><span></span><span></span></div>
+        <div class="rows" id="rows"></div>
+        <div class="add-bar">
+          <button class="btn small" data-add="delta" type="button">+ Change</button>
+          <button class="btn small" data-add="subtotal" type="button">+ Subtotal</button>
+          <button class="btn small" data-add="total" type="button">+ Total</button>
+          <button class="btn small" data-add="anchor" type="button">+ Absolute value</button>
+        </div>
+        <p class="hint"><b>Start</b> and <b>Absolute value</b> bars are typed values drawn from the axis. <b>Change</b> bars float. <b>Subtotal</b> and <b>Total</b> are calculated from the running sum.</p>
+        <div class="recon" id="recon"></div>
+      </div>
+    </div>
+
+    <!-- STYLE -->
+    <div class="pane" data-pane="style" role="tabpanel" aria-labelledby="tab-style" hidden>
+      <div class="sec">
+        <h2>Orientation</h2>
+        <div class="seg" data-seg="orientation"><button type="button" data-v="vertical">Vertical columns</button><button type="button" data-v="horizontal">Horizontal bars</button></div>
+      </div>
+      <div class="sec">
+        <h2>Bar style</h2>
+        <div class="seg" data-seg="barStyle">
+          <button type="button" data-v="solid">Solid</button><button type="button" data-v="gradient">Gradient</button><button type="button" data-v="outline">Outline</button><button type="button" data-v="capped">Capped</button><button type="button" data-v="hatched">Hatched</button>
+        </div>
+        <div class="grid2">
+          <label class="field"><span>Bar width</span><div class="range"><input type="range" id="f-barWidth" data-k="barWidth" min="25" max="95" step="1"><output data-out="barWidth"></output></div></label>
+          <label class="field"><span>Corner radius</span><div class="range"><input type="range" id="f-radius" data-k="radius" min="0" max="16" step="1"><output data-out="radius"></output></div></label>
+        </div>
+      </div>
+      <div class="sec">
+        <h2>Colour palette</h2>
+        <div class="palettes" id="palettes"></div>
+        <div class="colors">
+          <label class="cpick"><input type="color" data-c="inc" id="c-inc">Increase<code data-cv="inc"></code></label>
+          <label class="cpick"><input type="color" data-c="dec" id="c-dec">Decrease<code data-cv="dec"></code></label>
+          <label class="cpick"><input type="color" data-c="total" id="c-total">Key bars<code data-cv="total"></code></label>
+          <label class="cpick"><input type="color" data-c="sub" id="c-sub">Subtotal<code data-cv="sub"></code></label>
+          <label class="cpick"><input type="color" data-c="connector" id="c-connector">Connector<code data-cv="connector"></code></label>
+          <label class="cpick"><input type="color" data-c="text" id="c-text">Text<code data-cv="text"></code></label>
+          <label class="cpick"><input type="color" data-c="grid" id="c-grid">Gridlines<code data-cv="grid"></code></label>
+          <label class="cpick"><input type="color" data-c="bg" id="c-bg">Background<code data-cv="bg"></code></label>
+        </div>
+        <label class="tg"><input type="checkbox" id="f-invert" data-k="invert">Swap colours: increases are adverse (cost or loss bridges)</label>
+        <p class="hint">Each bar can also take its own colour from the swatch next to it on the Data tab.</p>
+      </div>
+      <div class="sec">
+        <h2>Connectors</h2>
+        <div class="grid2">
+          <label class="field"><span>Line</span>
+            <select id="f-connector" data-k="connector"><option value="dashed">Dashed</option><option value="dotted">Dotted</option><option value="solid">Solid</option><option value="none">None</option></select>
+          </label>
+          <label class="field"><span>Thickness</span><div class="range"><input type="range" id="f-connWidth" data-k="connWidth" min="0.5" max="4" step="0.25"><output data-out="connWidth"></output></div></label>
+        </div>
+      </div>
+      <div class="sec">
+        <h2>Typography</h2>
+        <div class="grid2">
+          <label class="field"><span>Chart font</span>
+            <select id="f-font" data-k="font">
+              <option>IBM Plex Sans</option><option>Source Sans 3</option><option>Libre Franklin</option><option>Barlow</option><option>Roboto</option><option>Arial</option><option>Calibri</option><option>Georgia</option>
+            </select>
+          </label>
+          <label class="field"><span>Text size</span><div class="range"><input type="range" id="f-fontScale" data-k="fontScale" min="70" max="150" step="5"><output data-out="fontScale"></output></div></label>
+        </div>
+        <label class="field"><span>Title alignment</span>
+          <div class="seg" data-seg="titleAlign"><button type="button" data-v="left">Left</button><button type="button" data-v="center">Centre</button></div>
+        </label>
+      </div>
+      <div class="sec">
+        <h2>Show</h2>
+        <div class="toggles">
+          <label class="tg"><input type="checkbox" id="f-legend" data-k="legend">Legend</label>
+          <label class="tg"><input type="checkbox" id="f-netBadge" data-k="netBadge">Net change badge</label>
+          <label class="tg"><input type="checkbox" id="f-grid" data-k="grid">Gridlines</label>
+          <label class="tg"><input type="checkbox" id="f-catAxisLine" data-k="catAxisLine">Baseline</label>
+        </div>
+      </div>
+    </div>
+
+    <!-- LABELS -->
+    <div class="pane" data-pane="labels" role="tabpanel" aria-labelledby="tab-labels" hidden>
+      <div class="sec">
+        <h2>Value labels</h2>
+        <div class="seg" data-seg="labelPos"><button type="button" data-v="outside">Outside bar</button><button type="button" data-v="inside">Inside bar</button><button type="button" data-v="none">Hidden</button></div>
+        <label class="field"><span>Content</span>
+          <select id="f-labelMode" data-k="labelMode">
+            <option value="value">Value only</option>
+            <option value="valuePct">Value and % of start</option>
+            <option value="pct">% of start for changes</option>
+          </select>
+        </label>
+        <div class="toggles">
+          <label class="tg"><input type="checkbox" id="f-labelSignColor" data-k="labelSignColor">Colour change labels</label>
+          <label class="tg"><input type="checkbox" id="f-boldTotals" data-k="boldTotals">Bold key bar names</label>
+        </div>
+      </div>
+      <div class="sec">
+        <h2>Number format</h2>
+        <div class="grid3">
+          <label class="field"><span>Decimals</span><input type="number" id="f-decimals" data-k="decimals" min="0" max="4" step="1"></label>
+          <label class="field"><span>Prefix</span><input type="text" id="f-prefix" data-k="prefix" placeholder="₹, $"></label>
+          <label class="field"><span>Suffix</span><input type="text" id="f-suffix" data-k="suffix" placeholder="%, MWh"></label>
+        </div>
+        <div class="grid2">
+          <label class="field"><span>Suffix on changes</span><input type="text" id="f-deltaSuffix" data-k="deltaSuffix" placeholder="Same as suffix"></label>
+          <label class="field"><span>Digit grouping</span>
+            <select id="f-grouping" data-k="grouping"><option value="in">Indian, 1,00,000</option><option value="intl">International, 100,000</option><option value="none">None, 100000</option></select>
+          </label>
+        </div>
+        <label class="tg"><input type="checkbox" id="f-plusSign" data-k="plusSign">Show + on increases</label>
+        <p class="hint">For PLF and CUF bridges, set the change suffix to " pp" to label changes in percentage points.</p>
+      </div>
+      <div class="sec">
+        <h2>Value axis</h2>
+        <div class="toggles">
+          <label class="tg"><input type="checkbox" id="f-valueAxis" data-k="valueAxis">Show axis</label>
+          <label class="tg"><input type="checkbox" id="f-showBreak" data-k="showBreak">Axis break marks</label>
+        </div>
+        <label class="field"><span>Axis title</span><input type="text" id="f-axisTitle" data-k="axisTitle" placeholder="e.g. PLF (%)"></label>
+        <div class="grid2">
+          <label class="field"><span>Minimum</span>
+            <select id="f-axisMin" data-k="axisMin"><option value="auto">Auto (zoom to bars)</option><option value="zero">Start at zero</option><option value="custom">Custom</option></select>
+          </label>
+          <label class="field" id="wrap-axisMinVal"><span>Custom minimum</span><input type="number" id="f-axisMinVal" data-k="axisMinVal" step="any"></label>
+          <label class="field"><span>Maximum</span>
+            <select id="f-axisMax" data-k="axisMax"><option value="auto">Auto</option><option value="custom">Custom</option></select>
+          </label>
+          <label class="field" id="wrap-axisMaxVal"><span>Custom maximum</span><input type="number" id="f-axisMaxVal" data-k="axisMaxVal" step="any"></label>
+        </div>
+        <p class="hint">Auto zooms in when the bars sit far above zero, as PLF bridges do, so small changes stay visible. Key bars then start from the axis floor and carry break marks.</p>
+      </div>
+      <div class="sec">
+        <h2>Bar names</h2>
+        <label class="field"><span>Rotation (vertical columns)</span>
+          <div class="seg" data-seg="catRotate"><button type="button" data-v="auto">Auto</button><button type="button" data-v="0">0°</button><button type="button" data-v="30">30°</button><button type="button" data-v="45">45°</button><button type="button" data-v="90">90°</button></div>
+        </label>
+      </div>
+      <div class="sec">
+        <h2>Legend text</h2>
+        <div class="grid2">
+          <label class="field"><span>Increase</span><input type="text" id="f-legendInc" data-k="legendInc"></label>
+          <label class="field"><span>Decrease</span><input type="text" id="f-legendDec" data-k="legendDec"></label>
+          <label class="field"><span>Key bars</span><input type="text" id="f-legendTotal" data-k="legendTotal"></label>
+          <label class="field"><span>Subtotal</span><input type="text" id="f-legendSub" data-k="legendSub"></label>
+        </div>
+      </div>
+      <div class="sec">
+        <h2>Footnote</h2>
+        <label class="field"><span>Source, basis or notes, shown under the chart</span><textarea id="f-footnote" data-k="footnote" rows="3" style="font-family:var(--f-body);font-size:13.5px"></textarea></label>
+      </div>
+    </div>
+
+    <!-- EXPORT -->
+    <div class="pane" data-pane="export" role="tabpanel" aria-labelledby="tab-export" hidden>
+      <div class="sec">
+        <h2>Image size</h2>
+        <label class="field"><span>Canvas</span>
+          <select id="f-exportPreset" data-k="exportPreset">
+            <option value="fhd">Full HD 16:9, 1920 × 1080</option>
+            <option value="qhd">QHD 16:9, 2560 × 1440</option>
+            <option value="uhd">4K 16:9, 3840 × 2160</option>
+            <option value="s43">Slide 4:3, 2400 × 1800</option>
+            <option value="a4l">A4 landscape at 300 dpi, 3508 × 2480</option>
+            <option value="a4p">A4 portrait at 300 dpi, 2480 × 3508</option>
+            <option value="sq">Square, 2400 × 2400</option>
+            <option value="wide">Wide banner 5:2, 3000 × 1200</option>
+            <option value="custom">Custom size</option>
+          </select>
+        </label>
+        <div class="grid2" id="customSize">
+          <label class="field"><span>Width (px)</span><input type="number" id="f-exportW" data-k="exportW" min="400" max="8000" step="10"></label>
+          <label class="field"><span>Height (px)</span><input type="number" id="f-exportH" data-k="exportH" min="300" max="8000" step="10"></label>
+        </div>
+        <label class="field"><span>Sharpness</span>
+          <div class="seg" data-seg="mult" data-num="1"><button type="button" data-v="1">1×</button><button type="button" data-v="2">2×</button><button type="button" data-v="3">3×</button></div>
+        </label>
+        <p class="hint">Output: <span class="px" id="pxOut"></span>. The layout stays identical at every size; only resolution changes.</p>
+      </div>
+      <div class="sec">
+        <h2>Format</h2>
+        <div class="seg" data-seg="format"><button type="button" data-v="png">PNG</button><button type="button" data-v="jpg">JPG</button></div>
+        <label class="tg" id="wrap-transparent"><input type="checkbox" id="f-transparent" data-k="transparent">Transparent background (PNG only)</label>
+        <label class="field"><span>File name</span><input type="text" id="f-filename" data-k="filename"></label>
+        <div class="export-box">
+          <button class="btn primary" id="btnDownload" type="button">Download image</button>
+          <button class="btn" id="btnCopy" type="button">Copy image to clipboard</button>
+        </div>
+      </div>
+      <div class="sec">
+        <h2>Setup file</h2>
+        <p class="hint">Save the bars and every setting as a .json file, then load it later to rebuild or tweak the same chart.</p>
+        <div class="add-bar">
+          <button class="btn small" id="btnSaveJson" type="button">Save setup</button>
+          <label class="btn small file-btn">Load setup<input type="file" id="fileJson" accept=".json,application/json"></label>
+          <button class="btn small ghost" id="btnReset" type="button">Reset style to defaults</button>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <section class="stage" aria-label="Preview">
+    <div class="summary" id="summary"></div>
+    <div class="frame" id="frame"><div class="canvas-box" id="canvasBox"><canvas id="preview" role="img" aria-label="Waterfall chart preview"></canvas></div></div>
+    <div class="stage-foot"><span>Preview scaled to fit. Export renders at <b id="pxFoot"></b>.</span><span id="viewNote"></span></div>
+  </section>
+</main>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+"use strict";
+const DESIGN_W = 1600;
+const LS_KEY = 'plfBridgeStudio.v1';
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const uid = () => Math.random().toString(36).slice(2,10);
+
+/* ---------- palettes, presets, templates ---------- */
+const PALETTES = {
+  consult:{name:'Consulting blue', inc:'#2F9E5F', dec:'#D64545', total:'#13315C', sub:'#5E85B5', connector:'#8C96A8', text:'#1B2433', grid:'#E5E9F0', bg:'#FFFFFF'},
+  board:  {name:'Board muted',     inc:'#4E9A78', dec:'#C25450', total:'#1E2B45', sub:'#8B9AB4', connector:'#A3ABB8', text:'#222B38', grid:'#ECEEF2', bg:'#FFFFFF'},
+  vivid:  {name:'Vivid',           inc:'#12A866', dec:'#EF4438', total:'#0B3B8C', sub:'#3E7BFA', connector:'#98A2B3', text:'#101828', grid:'#EAECF0', bg:'#FFFFFF'},
+  solar:  {name:'Solar amber',     inc:'#3E9B5C', dec:'#C8463D', total:'#173A5E', sub:'#D99A26', connector:'#A39C8E', text:'#1F2430', grid:'#EEE9DF', bg:'#FFFFFF'},
+  cvd:    {name:'Colour-blind safe',inc:'#0072B2', dec:'#D55E00', total:'#1B2A49', sub:'#7F8FA9', connector:'#9AA3B2', text:'#1B2433', grid:'#E6E9EF', bg:'#FFFFFF'},
+  mono:   {name:'Print mono',      inc:'#5C5C5C', dec:'#9E9E9E', total:'#1A1A1A', sub:'#7A7A7A', connector:'#9A9A9A', text:'#1A1A1A', grid:'#E8E8E8', bg:'#FFFFFF'},
+  dark:   {name:'Dark slide',      inc:'#3DD68C', dec:'#FF6B6B', total:'#4C8DF0', sub:'#8FB1E3', connector:'#5D6F8C', text:'#E8EDF5', grid:'#22324A', bg:'#0F1B2D'}
+};
+const SIZES = {fhd:[1920,1080], qhd:[2560,1440], uhd:[3840,2160], s43:[2400,1800], a4l:[3508,2480], a4p:[2480,3508], sq:[2400,2400], wide:[3000,1200]};
+
+const TEMPLATES = {
+  solar:{title:'Solar PLF bridge, P50 design to actual (FY 2025-26)', subtitle:'50 MWac ground-mount plant · example values', footnote:'Example data for illustration. PLF on AC capacity basis. Loss attribution per performance assessment.',
+    prefix:'', suffix:'%', deltaSuffix:'', decimals:2, axisTitle:'PLF (%)', filename:'solar-plf-bridge',
+    rows:[['P50 PLF (design)',24.50,'anchor'],['Irradiance variation',-0.85,'delta'],['Grid curtailment',-0.62,'delta'],['Grid unavailability',-0.38,'delta'],['Inverter & plant downtime',-0.41,'delta'],['Module soiling',-0.55,'delta'],['Module degradation',-0.30,'delta'],['Temperature gain',0.12,'delta'],['Actual PLF','','total']]},
+  wind:{title:'Wind CUF bridge, P50 to actual', subtitle:'Wind portfolio · example values', footnote:'Example data for illustration. CUF on installed capacity basis.',
+    prefix:'', suffix:'%', deltaSuffix:'', decimals:2, axisTitle:'CUF (%)', filename:'wind-cuf-bridge',
+    rows:[['P50 CUF',33.00,'anchor'],['Wind resource variation',-2.40,'delta'],['WTG availability',-1.10,'delta'],['Grid availability',-0.80,'delta'],['Power curve deviation',-0.70,'delta'],['Wake & turbulence',-0.50,'delta'],['Curtailment / backdown',-0.60,'delta'],['Air density',0.20,'delta'],['Actual CUF','','total']]},
+  bess:{title:'BESS round-trip efficiency bridge', subtitle:'Guaranteed RTE to measured RTE at POI · example values', footnote:'Example data for illustration. RTE measured over a full charge-discharge cycle.',
+    prefix:'', suffix:'%', deltaSuffix:'', decimals:2, axisTitle:'RTE (%)', filename:'bess-rte-bridge',
+    rows:[['Guaranteed RTE',87.00,'anchor'],['PCS conversion losses',-0.60,'delta'],['MV transformer losses',-0.40,'delta'],['HVAC load',-0.90,'delta'],['Auxiliary consumption',-1.20,'delta'],['SOC calibration',0.30,'delta'],['Measured RTE','','total']]},
+  gen:{title:'Annual generation bridge, budget to actual', subtitle:'Solar portfolio · example values', footnote:'Example data for illustration.',
+    prefix:'', suffix:' MWh', deltaSuffix:'', decimals:0, axisTitle:'Generation (MWh)', filename:'generation-bridge',
+    rows:[['Budget generation',182400,'anchor'],['GHI shortfall',-6250,'delta'],['Ambient temperature',1180,'delta'],['Weather-adjusted budget','','subtotal'],['Grid outage',-3120,'delta'],['Curtailment',-4560,'delta'],['Equipment downtime',-1940,'delta'],['Soiling above budget',-2210,'delta'],['Actual generation','','total']]},
+  multi:{title:'PLF trend bridge, FY24 to FY26', subtitle:'Year-on-year drivers · example values', footnote:'Example data for illustration.',
+    prefix:'', suffix:'%', deltaSuffix:' pp', decimals:2, axisTitle:'PLF (%)', filename:'plf-trend-bridge',
+    rows:[['FY24 actual PLF',22.80,'anchor'],['Irradiance',0.35,'delta'],['Availability gains',0.42,'delta'],['Degradation',-0.28,'delta'],['FY25 actual PLF','','subtotal'],['Curtailment',-0.71,'delta'],['Soiling',-0.19,'delta'],['Degradation',-0.27,'delta'],['FY26 actual PLF','','total']]},
+  rev:{title:'Revenue bridge, budget to actual', subtitle:'₹ crore · example values', footnote:'Example data for illustration.',
+    prefix:'₹', suffix:' Cr', deltaSuffix:'', decimals:1, axisTitle:'Revenue (₹ Cr)', filename:'revenue-bridge',
+    rows:[['Budget revenue',64.8,'anchor'],['Generation shortfall',-4.6,'delta'],['Deemed generation claims',1.2,'delta'],['DSM penalties',-0.8,'delta'],['Late payment surcharge',0.4,'delta'],['Actual revenue','','total']]},
+  blank:{title:'', subtitle:'', footnote:'', prefix:'', suffix:'', deltaSuffix:'', decimals:1, axisTitle:'', filename:'waterfall',
+    rows:[['Start',100,'anchor'],['Change 1',10,'delta'],['Change 2',-15,'delta'],['Change 3',5,'delta'],['End','','total']]}
+};
+const TPL_FIELDS = ['title','subtitle','footnote','prefix','suffix','deltaSuffix','decimals','axisTitle','filename'];
+
+const DEFAULT = {
+  rows:[], title:'', subtitle:'', footnote:'', isExample:false,
+  orientation:'vertical', barStyle:'solid', palette:'consult', colors:{...PALETTES.consult}, invert:false,
+  barWidth:62, radius:2, connector:'dashed', connWidth:1.5,
+  font:'IBM Plex Sans', fontScale:110, titleAlign:'left',
+  legend:true, netBadge:true, grid:true, catAxisLine:true,
+  labelPos:'outside', labelMode:'value', labelSignColor:true, boldTotals:true,
+  decimals:2, prefix:'', suffix:'%', deltaSuffix:'', grouping:'in', plusSign:true,
+  valueAxis:true, axisTitle:'', axisMin:'auto', axisMinVal:'', axisMax:'auto', axisMaxVal:'', showBreak:true, catRotate:'auto',
+  legendInc:'Increase', legendDec:'Decrease', legendTotal:'Total', legendSub:'Subtotal',
+  exportPreset:'uhd', exportW:3840, exportH:2160, mult:1, format:'png', transparent:false, filename:'plf-bridge'
+};
+const STYLE_KEYS = ['orientation','barStyle','palette','colors','invert','barWidth','radius','connector','connWidth','font','fontScale','titleAlign','legend','netBadge','grid','catAxisLine','labelPos','labelMode','labelSignColor','boldTotals','grouping','plusSign','valueAxis','axisMin','axisMinVal','axisMax','axisMaxVal','showBreak','catRotate','legendInc','legendDec','legendTotal','legendSub'];
+
+function rowsFrom(list){ return list.map(([label,value,type])=>({id:uid(), label, value: value===''? '' : String(value), type, color:null})); }
+function merge(saved){
+  const s = Object.assign(structuredClone(DEFAULT), saved||{});
+  s.colors = Object.assign({...DEFAULT.colors}, (saved&&saved.colors)||{});
+  if(!Array.isArray(s.rows)) s.rows = [];
+  s.rows = s.rows.map(r=>({id:r.id||uid(), label:String(r.label??''), value: r.value==null?'':String(r.value), type:['anchor','delta','subtotal','total'].includes(r.type)?r.type:'delta', color:r.color||null}));
+  return s;
+}
+let state = null;
+try{ const raw = localStorage.getItem(LS_KEY); if(raw) state = merge(JSON.parse(raw)); }catch(e){ state = null; }
+if(!state || !state.rows.length){ state = merge(null); loadTemplateInto(state,'solar'); }
+function loadTemplateInto(s,key){
+  const t = TEMPLATES[key]; if(!t) return;
+  s.rows = rowsFrom(t.rows); TPL_FIELDS.forEach(f=>{ s[f] = t[f]; }); s.isExample = key!=='blank';
+}
+
+/* ---------- history ---------- */
+const history = [];
+function snapshot(){ return JSON.stringify({rows:state.rows, ...Object.fromEntries(TPL_FIELDS.map(f=>[f,state[f]])), isExample:state.isExample}); }
+function pushHistory(){ history.push(snapshot()); if(history.length>50) history.shift(); $('#btnUndo').disabled = false; }
+function undo(){ const h = history.pop(); if(!h) return; const o = JSON.parse(h); Object.assign(state,o); $('#btnUndo').disabled = !history.length; syncControls(); renderRows(); changed(); toast('Undone'); }
+
+/* ---------- save ---------- */
+let saveT = 0;
+function save(){ clearTimeout(saveT); saveT = setTimeout(()=>{ try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }catch(e){} }, 300); }
+
+/* ---------- numbers ---------- */
+function parseNum(v){
+  if(typeof v==='number') return v;
+  let s = String(v??'').trim(); if(!s) return NaN;
+  let neg = false;
+  if(/^\(.*\)$/.test(s)){ neg = true; s = s.slice(1,-1); }
+  s = s.replace(/[−–—]/g,'-').replace(/[₹$€£%\s]/g,'').replace(/,/g,'');
+  const n = parseFloat(s);
+  if(!isFinite(n)) return NaN;
+  return neg ? -Math.abs(n) : n;
+}
+const nfCache = {};
+function nf(d){
+  const key = state.grouping+'|'+d;
+  if(!nfCache[key]) nfCache[key] = new Intl.NumberFormat(state.grouping==='in'?'en-IN':'en-US',{minimumFractionDigits:d, maximumFractionDigits:d, useGrouping: state.grouping!=='none'});
+  return nfCache[key];
+}
+function dec(){ const d = parseInt(state.decimals,10); return isFinite(d) ? Math.max(0,Math.min(6,d)) : 2; }
+function isZeroAt(v,d){ return Math.abs(v) < 0.5*Math.pow(10,-d); }
+function fmtAbs(v){ const d=dec(); const sign = (v<0 && !isZeroAt(v,d)) ? '−' : ''; return sign + state.prefix + nf(d).format(Math.abs(v)) + state.suffix; }
+function dSuffix(){ return state.deltaSuffix!=='' && state.deltaSuffix!=null ? state.deltaSuffix : state.suffix; }
+function fmtDelta(v){ const d=dec(); let sign=''; if(!isZeroAt(v,d)) sign = v<0 ? '−' : (state.plusSign?'+':''); return sign + state.prefix + nf(d).format(Math.abs(v)) + dSuffix(); }
+function fmtPct(p){ let sign=''; if(!isZeroAt(p,1)) sign = p<0?'−':'+'; return sign + nf(1).format(Math.abs(p)) + '%'; }
+function stepDecimals(step){ let d=0; while(d<6 && Math.abs(Math.round(step*Math.pow(10,d)) - step*Math.pow(10,d)) > 1e-7) d++; return d; }
+function fmtTick(v,step){ const d=stepDecimals(step); const sign = (v<0 && !isZeroAt(v,d)) ? '−':''; const pct = state.suffix.trim()==='%' ? '%' : ''; return sign + state.prefix + nf(d).format(Math.abs(v)) + pct; }
+
+/* ---------- model ---------- */
+function model(){
+  let run = 0, start = null; const bars = [], gaps = [];
+  state.rows.forEach((r,i)=>{
+    const raw = parseNum(r.value); const v = isFinite(raw) ? raw : 0;
+    if(r.type==='anchor'){
+      if(bars.length && Math.abs(v-run) > 1e-9) gaps.push({row:r, index:i, gap:v-run, run});
+      bars.push({r, i, kind:'abs', cls:'total', value:v, level:v});
+      run = v; if(start===null) start = v;
+    } else if(r.type==='delta'){
+      if(start===null) start = 0;
+      bars.push({r, i, kind:'delta', cls: v>=0?'inc':'dec', value:v, from:run, to:run+v, level:run+v});
+      run += v;
+    } else {
+      if(start===null) start = 0;
+      bars.push({r, i, kind:'abs', cls: r.type==='subtotal'?'sub':'total', value:run, level:run, computed:true});
+    }
+  });
+  return {bars, start: start??0, end: run, gaps};
+}
+function colorOf(b){
+  if(b.r && b.r.color) return b.r.color;
+  let cls = b.cls;
+  if(state.invert){ if(cls==='inc') cls='dec'; else if(cls==='dec') cls='inc'; }
+  return state.colors[cls];
+}
+
+/* ---------- colour helpers ---------- */
+function hexToRgb(h){ h = String(h||'#000').replace('#',''); if(h.length===3) h = h.split('').map(c=>c+c).join(''); const n = parseInt(h.slice(0,6),16)||0; return [(n>>16)&255,(n>>8)&255,n&255]; }
+function toHex(r,g,b){ return '#'+[r,g,b].map(x=>Math.round(Math.max(0,Math.min(255,x))).toString(16).padStart(2,'0')).join(''); }
+function rgba(h,a){ const [r,g,b] = hexToRgb(h); return `rgba(${r},${g},${b},${a})`; }
+function mix(h1,h2,t){ const a=hexToRgb(h1), b=hexToRgb(h2); return toHex(a[0]+(b[0]-a[0])*t, a[1]+(b[1]-a[1])*t, a[2]+(b[2]-a[2])*t); }
+function lum(h){ const c = hexToRgb(h).map(x=>{ x/=255; return x<=0.03928? x/12.92 : Math.pow((x+0.055)/1.055,2.4); }); return 0.2126*c[0]+0.7152*c[1]+0.0722*c[2]; }
+
+/* ---------- scale ---------- */
+function niceStep(x){ if(!(x>0)) return 1; const e = Math.floor(Math.log10(x)); const f = x/Math.pow(10,e); const nfv = f<1.5?1 : f<2.25?2 : f<3.5?2.5 : f<7.5?5 : 10; return nfv*Math.pow(10,e); }
+function computeScale(levels){
+  let lo = Math.min(...levels), hi = Math.max(...levels);
+  if(!isFinite(lo)||!isFinite(hi)){ lo=0; hi=1; }
+  if(hi===lo){ if(hi===0){hi=1;} else { lo = lo - Math.abs(lo)*0.1; hi = hi + Math.abs(hi)*0.1; } }
+  const range = hi-lo;
+  const head = state.labelPos==='none' ? 0.05 : (state.labelMode==='valuePct' ? (state.orientation==='horizontal'?0.26:0.2) : (state.orientation==='horizontal'?0.16:0.12));
+  let vmin, vmax, zoomed=false;
+  const cMin = parseNum(state.axisMinVal), cMax = parseNum(state.axisMaxVal);
+  if(state.axisMin==='custom' && isFinite(cMin)) vmin = cMin;
+  else if(state.axisMin==='zero') vmin = lo<0 ? lo - range*head : 0;
+  else {
+    if(lo>=0){ if(range/hi < 0.45){ vmin = Math.max(0, lo - range*0.55); zoomed = vmin>0; } else vmin = 0; }
+    else vmin = lo - range*head;
+  }
+  if(state.axisMax==='custom' && isFinite(cMax)) vmax = cMax;
+  else vmax = hi>0 ? hi + range*head : (state.axisMin==='zero'? 0 : hi + range*head);
+  if(hi<=0 && state.axisMin!=='custom' && vmax<0 && !zoomed) vmax = 0;
+  if(vmax<=vmin) vmax = vmin + (range||1);
+  const step = niceStep((vmax-vmin)/5);
+  let nmin = (state.axisMin==='custom' && isFinite(cMin)) ? vmin : Math.floor(vmin/step + 1e-9)*step;
+  if(state.axisMin==='auto' && lo>=0 && nmin<0) nmin = 0;
+  let nmax = (state.axisMax==='custom' && isFinite(cMax)) ? vmax : Math.ceil(vmax/step - 1e-9)*step;
+  if(nmax<=nmin) nmax = nmin+step;
+  const ticks = []; for(let t = Math.ceil(nmin/step - 1e-9)*step; t <= nmax + step*1e-6; t += step) ticks.push(+t.toFixed(10));
+  return {min:nmin, max:nmax, step, ticks};
+}
+
+/* ---------- text helpers ---------- */
+function wrapText(ctx, text, maxW){
+  const words = String(text||'').split(/\s+/).filter(Boolean); const lines=[]; let cur='';
+  for(const w of words){ const t = cur ? cur+' '+w : w; if(!cur || ctx.measureText(t).width <= maxW) cur = t; else { lines.push(cur); cur = w; } }
+  if(cur) lines.push(cur); return lines.length ? lines : [''];
+}
+function ellipsize(ctx, text, maxW){ if(ctx.measureText(text).width <= maxW) return text; let s = text; while(s.length>1 && ctx.measureText(s+'…').width > maxW) s = s.slice(0,-1); return s.trimEnd()+'…'; }
+function clampLines(ctx, lines, max, maxW){
+  let out = lines; if(lines.length>max){ out = lines.slice(0,max-1); out.push(lines.slice(max-1).join(' ')); }
+  return out.map(l=>ellipsize(ctx,l,maxW));
+}
+function fontStack(f){ if(f==='Georgia') return 'Georgia, "Times New Roman", serif'; if(f==='Arial') return 'Arial, Helvetica, sans-serif'; if(f==='Calibri') return 'Calibri, Carlito, "Segoe UI", Arial, sans-serif'; return `"${f}", Arial, sans-serif`; }
+
+/* ---------- drawing primitives ---------- */
+function rr(ctx,x,y,w,h,r){ r = Math.max(0, Math.min(r, w/2, h/2)); ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+function drawBar(ctx,x,y,w,h,col,isDelta,dir,orient,radius){
+  const st = state.barStyle;
+  ctx.save();
+  rr(ctx,x,y,w,h,radius);
+  if(st==='gradient'){
+    const g = orient==='v' ? ctx.createLinearGradient(0,y,0,y+h) : ctx.createLinearGradient(x+w,0,x,0);
+    g.addColorStop(0, mix(col,'#ffffff',0.32)); g.addColorStop(1, col);
+    ctx.fillStyle = g; ctx.fill();
+  } else if(st==='outline'){
+    ctx.fillStyle = rgba(col,0.14); ctx.fill();
+    rr(ctx,x+1,y+1,Math.max(0,w-2),Math.max(0,h-2),Math.max(0,radius-1)); ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.stroke();
+  } else if(st==='capped'){
+    ctx.fillStyle = rgba(col,0.32); ctx.fill(); ctx.clip();
+    const cap = Math.min(5, orient==='v'? h : w); ctx.fillStyle = col;
+    if(orient==='v'){ if(dir>=0) ctx.fillRect(x,y,w,cap); else ctx.fillRect(x,y+h-cap,w,cap); }
+    else { if(dir>=0) ctx.fillRect(x+w-cap,y,cap,h); else ctx.fillRect(x,y,cap,h); }
+  } else if(st==='hatched' && isDelta){
+    ctx.fillStyle = rgba(col,0.1); ctx.fill();
+    ctx.save(); ctx.clip(); ctx.strokeStyle = col; ctx.lineWidth = 1.7; ctx.beginPath();
+    for(let k=-h; k<w+h; k+=7){ ctx.moveTo(x+k, y+h); ctx.lineTo(x+k+h, y); }
+    ctx.stroke(); ctx.restore();
+    rr(ctx,x+0.75,y+0.75,Math.max(0,w-1.5),Math.max(0,h-1.5),radius); ctx.strokeStyle = col; ctx.lineWidth = 1.5; ctx.stroke();
+  } else { ctx.fillStyle = col; ctx.fill(); }
+  ctx.restore();
+}
+function breakStrip(ctx, pts, transparent, bg){
+  ctx.save(); ctx.beginPath(); ctx.moveTo(pts[0][0],pts[0][1]); for(let i=1;i<pts.length;i++) ctx.lineTo(pts[i][0],pts[i][1]); ctx.closePath();
+  if(transparent){ ctx.globalCompositeOperation='destination-out'; ctx.fillStyle='#000'; } else ctx.fillStyle = bg;
+  ctx.fill(); ctx.restore();
+}
+
+/* ---------- main render ---------- */
+function draw(ctx, W, H, opt){
+  opt = opt||{};
+  const s = state, C = s.colors, fs = (s.fontScale||100)/100, fam = fontStack(s.font);
+  const font = (w,sz) => `${w} ${(sz*fs).toFixed(2)}px ${fam}`;
+  const m = model(), n = m.bars.length, transparent = !!opt.transparent;
+  const darkBg = lum(C.bg) < 0.3;
+  const P = 56;
+  ctx.save();
+  ctx.clearRect(0,0,W,H);
+  if(!transparent){ ctx.fillStyle = C.bg; ctx.fillRect(0,0,W,H); }
+  ctx.textBaseline = 'alphabetic';
+  let y = P;
+  const center = s.titleAlign==='center';
+  const tx = center ? W/2 : P;
+
+  // title + subtitle
+  if(s.title.trim()){
+    ctx.font = font(700,36); ctx.fillStyle = C.text; ctx.textAlign = center?'center':'left';
+    wrapText(ctx, s.title.trim(), W-2*P).slice(0,2).forEach((l,k)=>{ y += 36*fs*(k?1.18:0.9); ctx.fillText(l,tx,y); });
+    y += 12*fs;
+  }
+  if(s.subtitle.trim()){
+    ctx.font = font(400,21); ctx.fillStyle = rgba(C.text,0.68); ctx.textAlign = center?'center':'left';
+    wrapText(ctx, s.subtitle.trim(), W-2*P).slice(0,2).forEach((l,k)=>{ y += 21*fs*(k?1.3:0.95); ctx.fillText(l,tx,y); });
+    y += 10*fs;
+  }
+
+  // legend + net badge row
+  const hasSub = m.bars.some(b=>b.cls==='sub'), hasTot = m.bars.some(b=>b.cls==='total');
+  const hasInc = m.bars.some(b=>b.cls==='inc'), hasDec = m.bars.some(b=>b.cls==='dec');
+  const showBadge = s.netBadge && n>1;
+  if((s.legend && n) || showBadge){
+    const rowH = 24*fs; y += 12*fs; const cy = y + rowH/2;
+    ctx.font = font(600,16);
+    const net = m.end - m.start;
+    let badgeW = 0;
+    if(showBadge){
+      let txt = 'Net change  ' + fmtDelta(net);
+      if(s.labelMode!=='value' && m.start) txt += '  (' + fmtPct(net/Math.abs(m.start)*100) + ')';
+      badgeW = ctx.measureText(txt).width + 26*fs;
+      const bx = W-P-badgeW, by = cy - rowH*0.62, bh = rowH*1.24;
+      const ncol = state.invert ? (net>=0?C.dec:C.inc) : (net>=0?C.inc:C.dec);
+      rr(ctx,bx,by,badgeW,bh,bh/2); ctx.fillStyle = rgba(ncol, darkBg?0.22:0.11); ctx.fill();
+      ctx.fillStyle = darkBg ? mix(ncol,'#ffffff',0.2) : mix(ncol,'#000000',0.18); ctx.textAlign='left'; ctx.textBaseline='middle';
+      ctx.fillText(txt, bx+13*fs, cy+1);
+    }
+    if(s.legend && n){
+      const items = [];
+      const incCol = state.invert?C.dec:C.inc, decCol = state.invert?C.inc:C.dec;
+      if(hasTot) items.push([s.legendTotal, C.total, false, 1]);
+      if(hasSub) items.push([s.legendSub, C.sub, false, 1]);
+      if(hasInc) items.push([s.legendInc, incCol, true, 1]);
+      if(hasDec) items.push([s.legendDec, decCol, true, -1]);
+      ctx.font = font(500,16); ctx.textBaseline='middle'; ctx.textAlign='left';
+      const sw = 16*fs, gap = 8*fs, itemGap = 24*fs;
+      const widths = items.map(it=> sw + gap + ctx.measureText(it[0]).width);
+      const total = widths.reduce((a,b)=>a+b,0) + itemGap*Math.max(0,items.length-1);
+      let lx = P;
+      if(center){ const c = W/2 - total/2; if(!showBadge || c+total < W-P-badgeW-20) lx = Math.max(P,c); }
+      items.forEach((it,k)=>{
+        drawBar(ctx, lx, cy-sw/2, sw, sw, it[1], it[2], it[3], 'v', Math.min(3,s.radius));
+        ctx.fillStyle = rgba(C.text,0.82); ctx.fillText(it[0], lx+sw+gap, cy+1);
+        lx += widths[k] + itemGap;
+      });
+    }
+    ctx.textBaseline='alphabetic';
+    y += rowH;
+  }
+
+  // footnote
+  let footLines = [];
+  if(s.footnote.trim()){
+    ctx.font = font(400,15);
+    footLines = s.footnote.trim().split(/\n/).flatMap(p=>wrapText(ctx,p,W-2*P)).slice(0,4);
+  }
+  const footLH = 20*fs;
+  const footH = footLines.length ? footLines.length*footLH + 18*fs : 0;
+  if(footLines.length){
+    ctx.font = font(400,15); ctx.fillStyle = rgba(C.text,0.58); ctx.textAlign = 'left';
+    footLines.forEach((l,k)=> ctx.fillText(l, P, H - P - (footLines.length-1-k)*footLH));
+  }
+
+  if(!n){
+    ctx.font = font(500,20); ctx.fillStyle = rgba(C.text,0.5); ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('Add bars on the Data tab to draw the waterfall', W/2, (y+H-P-footH)/2); ctx.restore(); return;
+  }
+
+  // scale
+  const levels = []; m.bars.forEach(b=>{ if(b.kind==='abs') levels.push(b.value); else { levels.push(b.from, b.to); } });
+  const sc = computeScale(levels);
+  const base = sc.min>0 ? sc.min : (sc.max<0 ? sc.max : 0);
+  const clampV = v => Math.max(sc.min, Math.min(sc.max, v));
+  const broken = s.showBreak && sc.min>0;
+  const tickLabels = sc.ticks.map(t=>fmtTick(t,sc.step));
+  const textMuted = rgba(C.text,0.62);
+  const labelColor = b => {
+    if(b.kind==='delta' && s.labelSignColor){ const c = colorOf(b); return darkBg ? mix(c,'#ffffff',0.15) : mix(c,'#000000',0.14); }
+    return C.text;
+  };
+  const dashFor = () => s.connector==='dashed' ? [7,5] : s.connector==='dotted' ? [1.5,4.5] : [];
+  const valueTexts = b => {
+    const main = b.kind==='delta' ? fmtDelta(b.value) : fmtAbs(b.value);
+    if(s.labelMode==='value' || !m.start) return [main];
+    const isFirstStart = b.r.type==='anchor' && b === m.bars.find(x=>x.r.type==='anchor');
+    if(isFirstStart) return [main];
+    const p = b.kind==='delta' ? b.value/Math.abs(m.start)*100 : (b.value-m.start)/Math.abs(m.start)*100;
+    if(s.labelMode==='pct' && b.kind==='delta') return [fmtPct(p)];
+    return [main, fmtPct(p)];
+  };
+
+  if(s.orientation !== 'horizontal'){
+    /* ===== vertical ===== */
+    ctx.font = font(400,16);
+    const tickW = s.valueAxis ? Math.max(...tickLabels.map(t=>ctx.measureText(t).width)) + 14*fs : 0;
+    const axTW = (s.valueAxis && s.axisTitle.trim()) ? 32*fs : 0;
+    const plotL = P + axTW + tickW, plotR = W - P;
+    const band = (plotR-plotL)/n;
+    ctx.font = font(500,17);
+    const lineH = 21*fs, maxLW = band*0.94;
+    let rot = s.catRotate==='auto' ? 0 : +s.catRotate;
+    let wrapped = m.bars.map(b=>wrapText(ctx, b.r.label, maxLW));
+    if(s.catRotate==='auto'){
+      const tooMany = wrapped.some(w=>w.length>3);
+      const wordTooWide = m.bars.some(b=>String(b.r.label).split(/\s+/).some(w=>ctx.measureText(w).width > maxLW*1.04));
+      if(band < 34*fs) rot = 90; else if(tooMany || wordTooWide || band < 62*fs) rot = 45;
+    }
+    let catH, rotLabels = null; const rad = rot*Math.PI/180;
+    if(rot===0){ wrapped = wrapped.map(w=>clampLines(ctx,w,3,maxLW)); catH = Math.max(...wrapped.map(w=>w.length))*lineH + 14*fs; }
+    else {
+      const maxRotW = Math.min(W*0.24, (H-y)*0.32);
+      rotLabels = m.bars.map(b=>ellipsize(ctx, String(b.r.label||''), maxRotW));
+      const mw = Math.max(...rotLabels.map(t=>ctx.measureText(t).width));
+      catH = mw*Math.sin(rad) + lineH*Math.cos(rad) + 18*fs;
+    }
+    const plotT = y + 18*fs, plotB = H - P - footH - catH;
+    const ys = v => plotB - (clampV(v)-sc.min)/(sc.max-sc.min)*(plotB-plotT);
+
+    // grid + ticks
+    ctx.lineWidth = 1;
+    sc.ticks.forEach((t,k)=>{
+      const yy = Math.round(ys(t))+0.5;
+      if(s.grid && Math.abs(t-base)>1e-9){ ctx.strokeStyle = C.grid; ctx.setLineDash([]); ctx.beginPath(); ctx.moveTo(plotL,yy); ctx.lineTo(plotR,yy); ctx.stroke(); }
+      if(s.valueAxis){ ctx.font = font(400,16); ctx.fillStyle = textMuted; ctx.textAlign='right'; ctx.textBaseline='middle'; ctx.fillText(tickLabels[k], plotL-12*fs, yy); }
+    });
+    if(s.valueAxis && s.axisTitle.trim()){
+      ctx.save(); ctx.translate(P+12*fs, (plotT+plotB)/2); ctx.rotate(-Math.PI/2); ctx.font = font(500,16); ctx.fillStyle = textMuted; ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText(ellipsize(ctx, s.axisTitle.trim(), plotB-plotT), 0, 0); ctx.restore();
+    }
+
+    // bars
+    const bw = band*s.barWidth/100;
+    m.bars.forEach((b,i)=>{
+      const cx = plotL + band*(i+0.5), x0 = cx - bw/2;
+      const a = b.kind==='abs' ? base : b.from, z = b.kind==='abs' ? b.value : b.to;
+      let y1 = ys(Math.max(a,z)), y2 = ys(Math.min(a,z));
+      if(y2-y1 < 2){ const mid=(y1+y2)/2; y1 = mid-1; y2 = mid+1; }
+      const dir = b.kind==='delta' ? Math.sign(b.value)||1 : (b.value>=base?1:-1);
+      drawBar(ctx, x0, y1, bw, y2-y1, colorOf(b), b.kind==='delta', dir, 'v', s.radius);
+      b.g = {x0, x1:x0+bw, y1, y2, cx, dir};
+    });
+    // break marks on key bars
+    if(broken){
+      m.bars.forEach(b=>{ if(b.kind!=='abs') return; const g=b.g; if(g.y2-g.y1 < 46*fs) return;
+        const yc = g.y2 - 20*fs, sk = Math.min(8, bw*0.12), th = 6.5*fs;
+        breakStrip(ctx, [[g.x0-2, yc+sk],[g.x1+2, yc-sk],[g.x1+2, yc-sk-th],[g.x0-2, yc+sk-th]], transparent, C.bg);
+      });
+    }
+    // baseline
+    const by = Math.round(ys(base))+0.5;
+    if(s.catAxisLine){ ctx.strokeStyle = rgba(C.text,0.38); ctx.lineWidth = 1.3; ctx.setLineDash([]); ctx.beginPath(); ctx.moveTo(plotL,by); ctx.lineTo(plotR,by); ctx.stroke(); }
+    if(sc.min<0 && sc.max>0 && base!==0){ /* zero is base when crossing; nothing extra */ }
+    if(broken && s.valueAxis){
+      ctx.strokeStyle = rgba(C.text,0.55); ctx.lineWidth = 1.4; ctx.beginPath();
+      [-4,4].forEach(o=>{ ctx.moveTo(plotL-6+o, by+7); ctx.lineTo(plotL+2+o, by-7); }); ctx.stroke();
+    }
+    // connectors
+    if(s.connector!=='none'){
+      ctx.strokeStyle = C.connector; ctx.lineWidth = s.connWidth; ctx.setLineDash(dashFor());
+      for(let i=0;i<n-1;i++){ const lv = m.bars[i].level; if(lv<sc.min-1e-9 || lv>sc.max+1e-9) continue; const yy = ys(lv);
+        ctx.beginPath(); ctx.moveTo(m.bars[i].g.x1, yy); ctx.lineTo(m.bars[i+1].g.x0, yy); ctx.stroke(); }
+      ctx.setLineDash([]);
+    }
+    // value labels
+    if(s.labelPos!=='none'){
+      m.bars.forEach(b=>{
+        const g = b.g, t = valueTexts(b), isKey = b.kind==='abs';
+        const f1 = font(isKey?700:600,17), f2 = font(500,14);
+        ctx.font = f1; const w1 = ctx.measureText(t[0]).width;
+        const fitsInside = (g.y2-g.y1) > (t.length>1?42:26)*fs && w1 < (g.x1-g.x0)-8;
+        ctx.textAlign='center';
+        if(s.labelPos==='inside' && fitsInside){
+          const col = colorOf(b);
+          const solidish = ['solid','gradient'].includes(s.barStyle) || (s.barStyle==='hatched' && b.kind!=='delta');
+          const tc = solidish ? (lum(col)>0.5?'#17202E':'#FFFFFF') : C.text;
+          const mid = (g.y1+g.y2)/2; ctx.textBaseline='middle';
+          if(t.length>1){ ctx.fillStyle = tc; ctx.fillText(t[0], g.cx, mid-9*fs); ctx.font=f2; ctx.fillStyle = tc; ctx.globalAlpha=.85; ctx.fillText(t[1], g.cx, mid+10*fs); ctx.globalAlpha=1; }
+          else { ctx.fillStyle = tc; ctx.fillText(t[0], g.cx, mid+1); }
+        } else {
+          const below = b.kind==='delta' ? b.value<0 : b.value<base;
+          const col = labelColor(b);
+          if(below){ ctx.textBaseline='top'; let yy = g.y2 + 7*fs; ctx.fillStyle = col; ctx.fillText(t[0], g.cx, yy); if(t[1]){ ctx.font=f2; ctx.fillStyle = textMuted; ctx.fillText(t[1], g.cx, yy+20*fs); } }
+          else { ctx.textBaseline='alphabetic'; let yy = g.y1 - 9*fs; if(t[1]){ ctx.font=f2; ctx.fillStyle = textMuted; ctx.fillText(t[1], g.cx, yy); yy -= 18*fs; ctx.font = f1; } ctx.fillStyle = col; ctx.fillText(t[0], g.cx, yy); }
+        }
+      });
+    }
+    // category labels
+    ctx.fillStyle = C.text;
+    m.bars.forEach((b,i)=>{
+      const g = b.g; const bold = s.boldTotals && b.kind==='abs';
+      ctx.font = font(bold?600:400,17); ctx.fillStyle = bold ? C.text : rgba(C.text,0.86);
+      if(rot===0){ ctx.textAlign='center'; ctx.textBaseline='top'; wrapped[i].forEach((l,k)=>ctx.fillText(l, g.cx, plotB + 11*fs + k*lineH)); }
+      else { ctx.save(); ctx.translate(g.cx + (rot===90? 0 : 4*fs), plotB + 12*fs); ctx.rotate(-rad); ctx.textAlign='right'; ctx.textBaseline='middle'; ctx.fillText(rotLabels[i], 0, 0); ctx.restore(); }
+    });
+  } else {
+    /* ===== horizontal ===== */
+    ctx.font = font(500,17);
+    const lineH = 21*fs, maxColW = W*0.3;
+    const wrapped = m.bars.map(b=>{ ctx.font = font(s.boldTotals&&b.kind==='abs'?600:400,17); return clampLines(ctx, wrapText(ctx,b.r.label,maxColW), 3, maxColW); });
+    let colW = 0; m.bars.forEach((b,i)=>{ ctx.font = font(s.boldTotals&&b.kind==='abs'?600:400,17); wrapped[i].forEach(l=>{ colW = Math.max(colW, ctx.measureText(l).width); }); });
+    colW = Math.max(60*fs, colW) + 18*fs;
+    const tickH = s.valueAxis ? 30*fs : 0, axTH = (s.valueAxis && s.axisTitle.trim()) ? 28*fs : 0;
+    const plotL = P + colW, plotR = W - P - 6;
+    const plotT = y + 16*fs, plotB = H - P - footH - tickH - axTH;
+    const band = (plotB-plotT)/n, bh = band*s.barWidth/100;
+    const xs = v => plotL + (clampV(v)-sc.min)/(sc.max-sc.min)*(plotR-plotL);
+
+    sc.ticks.forEach((t,k)=>{
+      const xx = Math.round(xs(t))+0.5;
+      if(s.grid && Math.abs(t-base)>1e-9){ ctx.strokeStyle = C.grid; ctx.lineWidth=1; ctx.setLineDash([]); ctx.beginPath(); ctx.moveTo(xx,plotT); ctx.lineTo(xx,plotB); ctx.stroke(); }
+      if(s.valueAxis){ ctx.font = font(400,16); ctx.fillStyle = textMuted; ctx.textAlign='center'; ctx.textBaseline='top'; ctx.fillText(tickLabels[k], xx, plotB+9*fs); }
+    });
+    if(s.valueAxis && s.axisTitle.trim()){ ctx.font = font(500,16); ctx.fillStyle = textMuted; ctx.textAlign='center'; ctx.textBaseline='top'; ctx.fillText(s.axisTitle.trim(), (plotL+plotR)/2, plotB+tickH+6*fs); }
+
+    m.bars.forEach((b,i)=>{
+      const cy = plotT + band*(i+0.5), y0 = cy - bh/2;
+      const a = b.kind==='abs' ? base : b.from, z = b.kind==='abs' ? b.value : b.to;
+      let x1 = xs(Math.min(a,z)), x2 = xs(Math.max(a,z));
+      if(x2-x1 < 2){ const mid=(x1+x2)/2; x1=mid-1; x2=mid+1; }
+      const dir = b.kind==='delta' ? Math.sign(b.value)||1 : (b.value>=base?1:-1);
+      drawBar(ctx, x1, y0, x2-x1, bh, colorOf(b), b.kind==='delta', dir, 'h', s.radius);
+      b.g = {x1, x2, y0, y1:y0+bh, cy};
+    });
+    if(broken){
+      m.bars.forEach(b=>{ if(b.kind!=='abs') return; const g=b.g; if(g.x2-g.x1 < 46*fs) return;
+        const xc = g.x1 + 20*fs, sk = Math.min(8,bh*0.12), th = 6.5*fs;
+        breakStrip(ctx, [[xc-sk, g.y1+2],[xc+sk, g.y0-2],[xc+sk+th, g.y0-2],[xc-sk+th, g.y1+2]], transparent, C.bg);
+      });
+    }
+    const bx = Math.round(xs(base))+0.5;
+    if(s.catAxisLine){ ctx.strokeStyle = rgba(C.text,0.38); ctx.lineWidth = 1.3; ctx.setLineDash([]); ctx.beginPath(); ctx.moveTo(bx,plotT); ctx.lineTo(bx,plotB); ctx.stroke(); }
+    if(broken && s.valueAxis){ ctx.strokeStyle = rgba(C.text,0.55); ctx.lineWidth = 1.4; ctx.beginPath(); [-4,4].forEach(o=>{ ctx.moveTo(bx-7, plotB+6+o); ctx.lineTo(bx+7, plotB-2+o); }); ctx.stroke(); }
+    if(s.connector!=='none'){
+      ctx.strokeStyle = C.connector; ctx.lineWidth = s.connWidth; ctx.setLineDash(dashFor());
+      for(let i=0;i<n-1;i++){ const lv = m.bars[i].level; if(lv<sc.min-1e-9 || lv>sc.max+1e-9) continue; const xx = xs(lv);
+        ctx.beginPath(); ctx.moveTo(xx, m.bars[i].g.y1); ctx.lineTo(xx, m.bars[i+1].g.y0); ctx.stroke(); }
+      ctx.setLineDash([]);
+    }
+    if(s.labelPos!=='none'){
+      m.bars.forEach(b=>{
+        const g = b.g, t = valueTexts(b), isKey = b.kind==='abs';
+        const f1 = font(isKey?700:600,17), f2 = font(500,14);
+        ctx.font = f1; const w1 = ctx.measureText(t[0]).width; ctx.font = f2; const w2 = t[1] ? ctx.measureText(t[1]).width + 8*fs : 0;
+        ctx.textBaseline='middle';
+        const fitsInside = (g.x2-g.x1) > w1 + w2 + 14*fs && bh > 20*fs;
+        if(s.labelPos==='inside' && fitsInside){
+          const col = colorOf(b); const solidish = ['solid','gradient'].includes(s.barStyle);
+          const tc = solidish ? (lum(col)>0.5?'#17202E':'#FFFFFF') : C.text;
+          const mx = (g.x1+g.x2)/2 - (w1+w2)/2;
+          ctx.textAlign='left'; ctx.font = f1; ctx.fillStyle = tc; ctx.fillText(t[0], mx, g.cy+1);
+          if(t[1]){ ctx.font=f2; ctx.globalAlpha=.85; ctx.fillText(t[1], mx+w1+8*fs, g.cy+1); ctx.globalAlpha=1; }
+        } else {
+          const left = b.kind==='delta' ? b.value<0 : b.value<base;
+          const col = labelColor(b);
+          if(left){
+            ctx.textAlign='right'; let xx = g.x1 - 9*fs;
+            if(t[1]){ ctx.font=f2; ctx.fillStyle=textMuted; ctx.fillText(t[1], xx, g.cy+1); xx -= w2; }
+            ctx.font=f1; ctx.fillStyle=col; ctx.fillText(t[0], xx, g.cy+1);
+          } else {
+            ctx.textAlign='left'; const xx = g.x2 + 9*fs;
+            ctx.font=f1; ctx.fillStyle=col; ctx.fillText(t[0], xx, g.cy+1);
+            if(t[1]){ ctx.font=f2; ctx.fillStyle=textMuted; ctx.fillText(t[1], xx+w1+8*fs, g.cy+1); }
+          }
+        }
+      });
+    }
+    m.bars.forEach((b,i)=>{
+      const bold = s.boldTotals && b.kind==='abs'; const lines = wrapped[i];
+      ctx.font = font(bold?600:400,17); ctx.fillStyle = bold ? C.text : rgba(C.text,0.86); ctx.textAlign='right'; ctx.textBaseline='middle';
+      const top = b.g.cy - (lines.length-1)*lineH/2;
+      lines.forEach((l,k)=>ctx.fillText(l, plotL - 14*fs, top + k*lineH));
+    });
+  }
+  ctx.restore();
+}
+
+/* ---------- preview ---------- */
+const canvas = $('#preview'), frame = $('#frame'), box = $('#canvasBox');
+let raf = 0;
+function schedule(){ if(raf) return; raf = requestAnimationFrame(()=>{ raf = 0; drawPreview(); }); }
+function drawPreview(){
+  const ew = state.exportW, eh = state.exportH;
+  const avail = frame.clientWidth - 28;
+  const maxH = Math.max(280, window.innerHeight*0.72);
+  let cw = Math.max(200, avail); let ch = cw*eh/ew;
+  if(ch > maxH && window.innerWidth > 980){ ch = maxH; cw = ch*ew/eh; }
+  box.style.width = cw+'px';
+  canvas.style.height = ch+'px';
+  const dpr = Math.min(window.devicePixelRatio||1, 2.5);
+  canvas.width = Math.round(cw*dpr); canvas.height = Math.round(ch*dpr);
+  const ctx = canvas.getContext('2d'); ctx.setTransform(1,0,0,1,0,0);
+  const k = canvas.width/DESIGN_W; ctx.scale(k,k);
+  const tr = state.format==='png' && state.transparent;
+  box.classList.toggle('checker', tr);
+  draw(ctx, DESIGN_W, DESIGN_W*eh/ew, {transparent:tr});
+}
+new ResizeObserver(schedule).observe(frame);
+window.addEventListener('resize', schedule);
+
+/* ---------- fonts ---------- */
+function ensureFonts(){
+  if(!document.fonts || !document.fonts.load) return Promise.resolve();
+  const f = state.font; if(['Arial','Georgia','Calibri'].includes(f)) return Promise.resolve();
+  return Promise.all([400,500,600,700].map(w=>document.fonts.load(`${w} 20px "${f}"`))).catch(()=>{});
+}
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(schedule);
+ensureFonts().then(schedule);
+
+/* ---------- rows editor ---------- */
+const rowsEl = $('#rows');
+let openRow = null;
+const esc = s => String(s??'').replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function renderRows(){
+  rowsEl.innerHTML = state.rows.map((r,i)=>{
+    const computed = r.type==='subtotal' || r.type==='total';
+    return `<div class="row-wrap${openRow===r.id?' open':''}" data-id="${r.id}">
+      <div class="row t-${r.type}">
+        <span class="idx">${i+1}</span>
+        <input type="text" class="r-label" id="lbl-${r.id}" value="${esc(r.label)}" aria-label="Label for bar ${i+1}">
+        <input type="text" class="r-val" id="val-${r.id}" inputmode="decimal" value="${computed?'':esc(r.value)}" ${computed?'readonly tabindex="-1"':''} aria-label="Value for bar ${i+1}">
+        <select class="r-type" id="typ-${r.id}" aria-label="Type for bar ${i+1}">
+          <option value="anchor"${r.type==='anchor'?' selected':''}>${i===0?'Start':'Absolute'}</option>
+          <option value="delta"${r.type==='delta'?' selected':''}>Change</option>
+          <option value="subtotal"${r.type==='subtotal'?' selected':''}>Subtotal</option>
+          <option value="total"${r.type==='total'?' selected':''}>Total</option>
+        </select>
+        <label class="sw${r.color?' custom':''}" title="Bar colour"><input type="color" class="r-color" id="col-${r.id}" aria-label="Colour for bar ${i+1}"></label>
+        <button class="more" type="button" data-more="${r.id}" aria-label="More actions for bar ${i+1}" aria-expanded="${openRow===r.id}">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><circle cx="3" cy="8" r="1.5"/><circle cx="8" cy="8" r="1.5"/><circle cx="13" cy="8" r="1.5"/></svg>
+        </button>
+      </div>
+      ${openRow===r.id?`<div class="row-tools">
+        <button class="btn small" type="button" data-act="up"${i===0?' disabled':''}>Move up</button>
+        <button class="btn small" type="button" data-act="down"${i===state.rows.length-1?' disabled':''}>Move down</button>
+        <button class="btn small" type="button" data-act="dup">Duplicate</button>
+        <button class="btn small" type="button" data-act="insert">Insert change below</button>
+        <button class="btn small" type="button" data-act="autocolor"${r.color?'':' disabled'}>Use palette colour</button>
+        <button class="btn small danger" type="button" data-act="del">Delete</button>
+      </div>`:''}
+    </div>`;
+  }).join('');
+  $('#rowCount').textContent = `· ${state.rows.length}`;
+  updateComputed();
+}
+function rowById(id){ return state.rows.find(r=>r.id===id); }
+function updateComputed(){
+  const m = model();
+  m.bars.forEach(b=>{
+    const r = b.r, wrap = rowsEl.querySelector(`[data-id="${r.id}"]`); if(!wrap) return;
+    const vi = wrap.querySelector('.r-val'), ci = wrap.querySelector('.r-color'), sw = wrap.querySelector('.sw');
+    if(b.computed) vi.value = fmtAbs(b.value);
+    vi.classList.toggle('pos', r.type==='delta' && b.value>0);
+    vi.classList.toggle('neg', r.type==='delta' && b.value<0);
+    const raw = String(r.value).trim();
+    vi.style.borderColor = (!b.computed && raw!=='' && !isFinite(parseNum(raw))) ? 'var(--bad)' : '';
+    const col = colorOf(b); sw.style.background = col; if(document.activeElement!==ci) ci.value = col;
+    sw.classList.toggle('custom', !!r.color);
+  });
+  renderSummary(m); renderRecon(m);
+}
+function renderSummary(m){
+  const net = m.end - m.start; const n = m.bars.length;
+  const good = state.invert ? net<0 : net>0;
+  const cls = Math.abs(net)<1e-12 ? '' : (good?'pos':'neg');
+  const pct = m.start ? ` (${fmtPct(net/Math.abs(m.start)*100)})` : '';
+  $('#summary').innerHTML = `
+    <div class="stat"><span>Start</span><b>${esc(fmtAbs(m.start))}</b></div>
+    <div class="stat"><span>Net change</span><b class="${cls}">${esc(fmtDelta(net)+pct)}</b></div>
+    <div class="stat"><span>End</span><b>${esc(fmtAbs(m.end))}</b></div>
+    <div class="stat"><span>${n} bars</span><div class="chips">${m.gaps.length?`<span class="chip gap">${m.gaps.length} gap${m.gaps.length>1?'s':''} to reconcile</span>`:`<span class="chip ok">Bridge reconciles</span>`}${state.isExample?'<span class="chip ex">Example values</span>':''}</div></div>`;
+}
+function renderRecon(m){
+  $('#recon').innerHTML = m.gaps.map(g=>`<div class="item"><div><b>Bar ${g.index+1}, ${esc(g.row.label||'untitled')}</b>, is entered as ${esc(fmtAbs(parseNum(g.row.value)))}, but the bars before it reach ${esc(fmtAbs(g.run))}. Gap: ${esc(fmtDelta(g.gap))}.</div><button class="btn small" type="button" data-balance="${g.row.id}">Add balancing bar</button></div>`).join('');
+}
+function markEdited(){ if(state.isExample){ state.isExample = false; } }
+
+rowsEl.addEventListener('input', e=>{
+  const wrap = e.target.closest('.row-wrap'); if(!wrap) return; const r = rowById(wrap.dataset.id); if(!r) return;
+  if(e.target.classList.contains('r-label')){ r.label = e.target.value; markEdited(); }
+  else if(e.target.classList.contains('r-val')){ r.value = e.target.value; markEdited(); }
+  else if(e.target.classList.contains('r-color')){ r.color = e.target.value; }
+  updateComputed(); changed();
+});
+rowsEl.addEventListener('change', e=>{
+  const wrap = e.target.closest('.row-wrap'); if(!wrap) return; const r = rowById(wrap.dataset.id); if(!r) return;
+  if(e.target.classList.contains('r-type')){
+    pushHistory();
+    const prev = r.type; r.type = e.target.value;
+    if((r.type==='anchor'||r.type==='delta') && (prev==='subtotal'||prev==='total') && r.value===''){
+      const m = model(); const b = m.bars.find(x=>x.r===r); r.value = r.type==='anchor' && b ? String(+b.level.toFixed(6)) : '0';
+    }
+    markEdited(); renderRows(); changed();
+    const sel = document.getElementById('typ-'+r.id); if(sel) sel.focus();
+  }
+});
+rowsEl.addEventListener('keydown', e=>{
+  if(e.key!=='Enter') return; const t = e.target; if(!t.matches('.r-label,.r-val')) return; e.preventDefault();
+  const wrap = t.closest('.row-wrap'); const idx = state.rows.findIndex(r=>r.id===wrap.dataset.id);
+  if(t.classList.contains('r-label')){ const v = wrap.querySelector('.r-val'); if(!v.readOnly){ v.focus(); v.select(); return; } }
+  const next = state.rows[idx+1]; if(next){ const el = document.getElementById('lbl-'+next.id); el.focus(); el.select(); }
+});
+rowsEl.addEventListener('click', e=>{
+  const more = e.target.closest('[data-more]');
+  if(more){ openRow = openRow===more.dataset.more ? null : more.dataset.more; renderRows(); const b = rowsEl.querySelector(`[data-more="${more.dataset.more}"]`); if(b) b.focus(); return; }
+  const act = e.target.closest('[data-act]'); if(!act) return;
+  const wrap = act.closest('.row-wrap'); const idx = state.rows.findIndex(r=>r.id===wrap.dataset.id); if(idx<0) return;
+  const r = state.rows[idx]; const a = act.dataset.act;
+  pushHistory();
+  if(a==='up' && idx>0){ state.rows.splice(idx,1); state.rows.splice(idx-1,0,r); }
+  else if(a==='down' && idx<state.rows.length-1){ state.rows.splice(idx,1); state.rows.splice(idx+1,0,r); }
+  else if(a==='dup'){ const c = {...r, id:uid()}; state.rows.splice(idx+1,0,c); }
+  else if(a==='insert'){ const c = {id:uid(), label:'New change', value:'0', type:'delta', color:null}; state.rows.splice(idx+1,0,c); openRow=null; markEdited(); renderRows(); changed(); focusRow(c.id); return; }
+  else if(a==='autocolor'){ r.color = null; }
+  else if(a==='del'){ state.rows.splice(idx,1); openRow = null; toast('Bar deleted. Undo brings it back.'); }
+  markEdited(); renderRows(); changed();
+  const keep = rowsEl.querySelector(`[data-id="${r.id}"] [data-act="${a}"]`) || rowsEl.querySelector(`[data-more="${r.id}"]`); if(keep && !keep.disabled) keep.focus();
+});
+function focusRow(id){ const el = document.getElementById('lbl-'+id); if(el){ el.focus(); el.select(); } }
+$$('[data-add]').forEach(b=>b.addEventListener('click',()=>{
+  const type = b.dataset.add; pushHistory();
+  const labels = {delta:'New change', subtotal:'Subtotal', total:'Total', anchor:'Absolute value'};
+  const m = model();
+  const r = {id:uid(), label:labels[type], value: type==='delta'?'0' : type==='anchor' ? String(+m.end.toFixed(6)) : '', type, color:null};
+  let at = state.rows.length;
+  const last = state.rows[state.rows.length-1];
+  if((type==='delta'||type==='subtotal') && last && (last.type==='total' || (last.type==='anchor' && state.rows.length>1))) at = state.rows.length-1;
+  state.rows.splice(at,0,r); markEdited(); renderRows(); changed(); focusRow(r.id);
+}));
+$('#recon').addEventListener('click', e=>{
+  const b = e.target.closest('[data-balance]'); if(!b) return;
+  const m = model(); const g = m.gaps.find(x=>x.row.id===b.dataset.balance); if(!g) return;
+  pushHistory();
+  const d = Math.pow(10, Math.max(dec(),2)+2);
+  state.rows.splice(g.index,0,{id:uid(), label:'Unexplained / other', value:String(Math.round(g.gap*d)/d), type:'delta', color:null});
+  markEdited(); renderRows(); changed(); toast('Balancing bar added');
+});
+$('#btnUndo').addEventListener('click', undo);
+document.addEventListener('keydown', e=>{
+  if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='z' && !e.shiftKey){
+    const t = e.target; if(t && t.matches && t.matches('input[type=text],input[type=number],textarea') ) return;
+    if(history.length){ e.preventDefault(); undo(); }
+  }
+});
+
+/* ---------- paste ---------- */
+$('#btnPasteToggle').addEventListener('click',()=>{ const p = $('#pasteBox'); p.hidden = !p.hidden; if(!p.hidden) $('#pasteText').focus(); });
+$('#pasteCancel').addEventListener('click',()=>{ $('#pasteBox').hidden = true; });
+function parsePaste(text, appendMode){
+  const lines = String(text).split(/\r?\n/).map(l=>l.replace(/\s+$/,'')).filter(l=>l.trim());
+  const out = [];
+  const typeOf = t => { t = String(t||'').trim().toLowerCase(); if(!t) return null;
+    if(/^(start|base|abs|absolute|anchor|actual|budget|opening)/.test(t)) return 'anchor';
+    if(/^sub/.test(t)) return 'subtotal'; if(/^(total|end|closing|final)/.test(t)) return 'total';
+    if(/^(change|delta|var|step|\+|-)/.test(t)) return 'delta'; return null; };
+  lines.forEach(line=>{
+    let label, val='', typ=null;
+    if(line.includes('\t')){ const c = line.split('\t'); label = c[0].trim(); val = (c[1]||'').trim(); typ = typeOf(c[2]); }
+    else {
+      const mm = line.match(/^(.*?)[,;]\s*([^,;]*?)\s*(?:[,;]\s*([A-Za-z+\-]+))?\s*$/);
+      if(mm){ label = mm[1].trim(); val = mm[2].trim(); typ = typeOf(mm[3]); } else { label = line.trim(); }
+    }
+    if(!label && !val) return;
+    const v = parseNum(val);
+    out.push({label, value: isFinite(v)? String(v) : '', type:typ, hasVal: isFinite(v)});
+  });
+  out.forEach((r,i)=>{
+    if(r.type) return;
+    const isLast = i===out.length-1;
+    if(i===0 && !appendMode && r.hasVal) r.type = 'anchor';
+    else if(!r.hasVal && /sub/i.test(r.label)) r.type = 'subtotal';
+    else if(!r.hasVal) r.type = 'total';
+    else if(isLast && /(actual|total|final|closing|end|measured)/i.test(r.label)) r.type = 'anchor';
+    else r.type = 'delta';
+  });
+  return out.map(r=>({id:uid(), label:r.label, value: (r.type==='subtotal'||r.type==='total')?'':r.value, type:r.type, color:null}));
+}
+function doPaste(append){
+  const rows = parsePaste($('#pasteText').value, append);
+  if(!rows.length){ toast('Nothing to add. Paste one bar per line: Label, Value, Type.'); return; }
+  pushHistory();
+  if(append) state.rows.push(...rows); else state.rows = rows;
+  state.isExample = false; $('#pasteBox').hidden = true; $('#pasteText').value=''; renderRows(); changed();
+  toast(`${rows.length} bar${rows.length>1?'s':''} ${append?'appended':'loaded'}`);
+}
+$('#pasteReplace').addEventListener('click',()=>doPaste(false));
+$('#pasteAppend').addEventListener('click',()=>doPaste(true));
+
+/* ---------- templates ---------- */
+$('#tplSelect').addEventListener('change', e=>{
+  const k = e.target.value; if(!k) return; pushHistory(); loadTemplateInto(state,k); openRow=null;
+  syncControls(); renderRows(); changed(); e.target.value=''; toast('Template loaded');
+});
+
+/* ---------- settings binding ---------- */
+function readEl(el){ if(el.type==='checkbox') return el.checked; if(el.type==='range') return +el.value; if(el.type==='number'){ return el.value==='' ? '' : +el.value; } return el.value; }
+$$('[data-k]').forEach(el=>{
+  const ev = (el.type==='checkbox' || el.tagName==='SELECT') ? 'change' : 'input';
+  el.addEventListener(ev, ()=>{ const k = el.dataset.k; state[k] = readEl(el); onSetting(k); });
+});
+$$('[data-seg]').forEach(seg=>{
+  seg.addEventListener('click', e=>{ const b = e.target.closest('button[data-v]'); if(!b) return; const k = seg.dataset.seg; state[k] = seg.dataset.num ? +b.dataset.v : b.dataset.v; onSetting(k); });
+});
+$$('[data-c]').forEach(el=>{
+  el.addEventListener('input', ()=>{ state.colors[el.dataset.c] = el.value; state.palette = 'custom'; syncColors(); updateComputed(); changed(); });
+});
+function onSetting(k){
+  if(k==='grouping'){ for(const kk in nfCache) delete nfCache[kk]; }
+  if(k==='exportPreset' && SIZES[state.exportPreset]){ [state.exportW, state.exportH] = SIZES[state.exportPreset]; }
+  if(k==='exportW' || k==='exportH'){ state.exportPreset = 'custom'; const w = +state.exportW, h = +state.exportH; if(!(w>=200) || !(h>=200)) { syncVisibility(); return; } }
+  if(k==='font'){ ensureFonts().then(schedule); }
+  if(['prefix','suffix','deltaSuffix','decimals','grouping','plusSign','invert'].includes(k)) updateComputed();
+  syncControls(k);
+  changed();
+}
+function changed(){ schedule(); save(); }
+
+function syncColors(){
+  $$('[data-c]').forEach(el=>{ el.value = state.colors[el.dataset.c]; });
+  $$('[data-cv]').forEach(el=>{ el.textContent = state.colors[el.dataset.cv].toUpperCase(); });
+  $$('.pal').forEach(p=>p.setAttribute('aria-pressed', String(p.dataset.pal===state.palette)));
+}
+function syncVisibility(){
+  $('#wrap-axisMinVal').hidden = state.axisMin!=='custom';
+  $('#wrap-axisMaxVal').hidden = state.axisMax!=='custom';
+  $('#customSize').hidden = state.exportPreset!=='custom';
+  const tr = $('#f-transparent'); tr.disabled = state.format!=='png'; $('#wrap-transparent').style.opacity = state.format==='png'?1:.5;
+  const w = Math.round(state.exportW*state.mult), h = Math.round(state.exportH*state.mult);
+  const txt = `${w.toLocaleString('en-US')} × ${h.toLocaleString('en-US')} px`;
+  $('#pxOut').textContent = txt + ` (${(w*h/1e6).toFixed(1)} MP)`;
+  $('#pxFoot').textContent = txt;
+  $('#dlLabel').textContent = 'Download ' + (state.format==='jpg'?'JPG':'PNG');
+}
+function syncControls(skip){
+  $$('[data-k]').forEach(el=>{
+    const k = el.dataset.k; if(k===skip && el===document.activeElement && el.type!=='checkbox' && el.tagName!=='SELECT') return;
+    const v = state[k]; if(el.type==='checkbox') el.checked = !!v; else el.value = v ?? '';
+  });
+  $$('[data-out]').forEach(o=>{ const k=o.dataset.out; const v = state[k]; o.textContent = k==='barWidth'||k==='fontScale' ? v+'%' : k==='connWidth' ? (+v).toFixed(2) : v; });
+  $$('[data-seg]').forEach(seg=>{ const k = seg.dataset.seg; seg.querySelectorAll('button[data-v]').forEach(b=>b.setAttribute('aria-pressed', String(String(state[k])===b.dataset.v))); });
+  syncColors(); syncVisibility();
+}
+// palettes
+$('#palettes').innerHTML = Object.entries(PALETTES).map(([k,p])=>`<button class="pal" type="button" data-pal="${k}" aria-pressed="false"><span class="dots"><i style="background:${p.total}"></i><i style="background:${p.inc}"></i><i style="background:${p.dec}"></i><i style="background:${p.bg};box-shadow:inset 0 0 0 1px rgba(0,0,0,.25)"></i></span>${p.name}</button>`).join('');
+$('#palettes').addEventListener('click', e=>{ const b = e.target.closest('.pal'); if(!b) return; const p = PALETTES[b.dataset.pal]; const {name, ...cols} = p; state.colors = {...cols}; state.palette = b.dataset.pal; if(b.dataset.pal==='mono' && state.barStyle==='solid') { state.barStyle='hatched'; syncControls(); } syncColors(); updateComputed(); changed(); });
+
+// tabs
+$$('.tab').forEach(t=>t.addEventListener('click',()=>{
+  $$('.tab').forEach(x=>x.setAttribute('aria-selected', String(x===t)));
+  $$('.pane').forEach(p=>{ p.hidden = p.dataset.pane!==t.dataset.tab; });
+}));
+
+/* ---------- export ---------- */
+let toastT = 0;
+function toast(msg){ const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(()=>t.classList.remove('show'), 2800); }
+const inViewer = !!(window.claude && typeof window.claude.use==='function');
+const dlPromise = inViewer ? Promise.resolve().then(()=>window.claude.use('downloads')).catch(()=>null) : Promise.resolve(null);
+function safeName(base, ext){ const b = String(base||'waterfall').trim().replace(/[\\/:*?"<>|]+/g,'-').replace(/\s+/g,'-').slice(0,120) || 'waterfall'; return b.replace(/\.(png|jpe?g|json)$/i,'') + '.' + ext; }
+async function saveFile(name, blob){
+  const dl = await dlPromise;
+  if(dl){
+    try{ await dl.save({filename:name, data:blob}); toast('Saved ' + name); }
+    catch(e){ const c = e && e.code;
+      if(c==='declined') toast('Download cancelled');
+      else if(c==='rate_limited') toast('A save prompt is already open. Try again in a moment.');
+      else if(c==='too_large') toast('That file is too large here. Choose a smaller size or 1× sharpness.');
+      else toast('Saving is not available in this view. Open the HTML file in your browser to download.');
+    }
+    return;
+  }
+  if(inViewer){ toast('Saving is not available in this view. Open the HTML file in your browser to download.'); return; }
+  const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 5000); toast('Downloaded ' + name);
+}
+async function renderImage(forcePng){
+  await ensureFonts();
+  const W = state.exportW, H = state.exportH; const png = forcePng || state.format==='png';
+  let mult = state.mult;
+  while(true){
+    const pw = Math.round(W*mult), ph = Math.round(H*mult);
+    let blob = null;
+    try{
+      const c = document.createElement('canvas'); c.width = pw; c.height = ph;
+      const ctx = c.getContext('2d');
+      if(ctx){ const k = pw/DESIGN_W; ctx.scale(k,k); draw(ctx, DESIGN_W, DESIGN_W*H/W, {transparent: png && state.transparent});
+        blob = await new Promise(r=>c.toBlob(r, png?'image/png':'image/jpeg', 0.95)); }
+    }catch(e){ blob = null; }
+    if(blob) return {blob, pw, ph, mult, png};
+    if(mult<=1) throw new Error('This browser could not draw an image that large.');
+    mult = mult>2 ? 2 : 1;
+    toast(`Image too large for this browser, retrying at ${mult}×`);
+  }
+}
+async function download(){
+  try{
+    const r = await renderImage(false);
+    if(r.mult!==state.mult) toast(`Exported at ${r.pw} × ${r.ph} px`);
+    await saveFile(safeName(state.filename, r.png?'png':'jpg'), r.blob);
+  }catch(e){ toast(e.message || 'Export failed'); }
+}
+function copyImage(){
+  if(!navigator.clipboard || !window.ClipboardItem){ toast('Copying images is not supported here. Download the PNG instead.'); return; }
+  try{
+    const p = renderImage(true).then(r=>r.blob);
+    navigator.clipboard.write([new ClipboardItem({'image/png': p})]).then(()=>toast('Chart copied. Paste it into PowerPoint, Excel or Word.')).catch(()=>toast('Copy was blocked here. Download the PNG instead.'));
+  }catch(e){ toast('Copy was blocked here. Download the PNG instead.'); }
+}
+$('#btnDownload').addEventListener('click', download);
+$('#btnDownloadTop').addEventListener('click', download);
+$('#btnCopy').addEventListener('click', copyImage);
+$('#btnCopyTop').addEventListener('click', copyImage);
+$('#btnSaveJson').addEventListener('click', ()=>{
+  const data = JSON.stringify({app:'PLF Bridge Studio', version:1, ...state}, null, 2);
+  saveFile(safeName(state.filename,'json'), new Blob([data],{type:'application/json'}));
+});
+$('#fileJson').addEventListener('change', e=>{
+  const f = e.target.files && e.target.files[0]; if(!f) return;
+  const rd = new FileReader();
+  rd.onload = ()=>{ try{ const o = JSON.parse(rd.result); if(!o || !Array.isArray(o.rows)) throw 0; pushHistory(); const keepHist = history.slice(); state = merge(o); for(const k in nfCache) delete nfCache[k]; syncControls(); renderRows(); changed(); toast('Setup loaded'); }catch(err){ toast('That file is not a PLF Bridge Studio setup (.json).'); } e.target.value=''; };
+  rd.readAsText(f);
+});
+$('#btnReset').addEventListener('click', ()=>{
+  STYLE_KEYS.forEach(k=>{ state[k] = structuredClone(DEFAULT[k]); }); for(const k in nfCache) delete nfCache[k];
+  syncControls(); updateComputed(); changed(); toast('Style reset. Your bars are unchanged.');
+});
+if(inViewer){ dlPromise.then(d=>{ if(!d) $('#viewNote').textContent = 'Downloads are off in this view.'; }); }
+
+/* ---------- boot ---------- */
+syncControls(); renderRows(); schedule();
+})();
+</script>
